@@ -3,7 +3,7 @@ library(tidyverse)
 pres <- read_csv("data/foi_waterlow.csv")
 
 trim <- subset(pres, drug_name == "Trimethoprim") %>%
-    group_by(YEAR, MONTH) %>%
+    group_by(YEAR, MONTH, GENDER) %>%
     summarise(.,
         average_usage = mean(ITEMS/population),
         av_usage_items = mean(ITEMS)
@@ -15,7 +15,7 @@ trim <- subset(pres, drug_name == "Trimethoprim") %>%
     )
 
 nitro <- subset(pres, drug_name == "Nitrofurantoin") %>%
-    group_by(YEAR, MONTH) %>%
+    group_by(YEAR, MONTH, GENDER) %>%
     summarise(.,
         average_usage = mean(ITEMS/population)
     ) %>%
@@ -25,23 +25,32 @@ nitro <- subset(pres, drug_name == "Nitrofurantoin") %>%
         ab = "nitro"
     )
 
-trimnitro <- bind_rows(trim, nitro)
+trimnitro <- bind_rows(trim, nitro) 
 
-png("TrimVsNitroPrescriptions.png", width = 15, height = 8, units = "cm", res = 300)
+png("TrimVsNitroPrescriptions.png", width = 25, height = 8, units = "cm", res = 300)
 p <- ggplot(trimnitro, aes(monthdate, average_usage, col = ab)) + 
     geom_point() + 
     theme_bw() + 
-    labs(x = "Month", y = "Usage per capita", col = "antibiotic")
+    labs(x = "Month", y = "Usage per capita", col = "antibiotic") + 
+    facet_wrap(~GENDER)
 print(p)
 dev.off()
 
 #convert for working with the model
 #need a left join not a bindrow
+nitrosub <- nitro %>%
+    ungroup %>%
+    subset(GENDER == "Female") %>%
+    rename(nitro = average_usage) %>%
+    select(monthdate, nitro)
+
 trimnitro2 <- trim %>%
     ungroup() %>%
-    select(monthdate, average_usage) %>%
-    left_join(., select(ungroup(nitro), monthdate, average_usage), by = "monthdate") %>%
-    setNames(., c("monthdate", "trim", "nitro"))
+    subset(GENDER == "Female") %>%
+    rename(trim = average_usage) %>%
+    select(monthdate, trim) %>%
+    left_join(., nitrosub, by = "monthdate") 
+
 #needs to be in days from 0
 trimnitro2$timeindays <- as.numeric(abs(trimnitro2$monthdate[1] - trimnitro2$monthdate))
 #needs to have relative usage rates
@@ -51,3 +60,4 @@ trimsub <- trimnitro2 %>%
     select(timeindays, relpres)
 
 write_csv(trimsub, "relativeprescriptionchanges.csv")
+
