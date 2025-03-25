@@ -1,6 +1,6 @@
-function runmodel(params)
-    p[1] = params[1]
-    p[4] = params[2]
+#For beta
+function runmodelbeta(param)
+    p[1] = param[1]
     u0 = [0.001,0.001,0.0,0.0]
     tspan = (0.,10^6)
     prob = ODEProblem(tc, u0, tspan, p)
@@ -8,26 +8,18 @@ function runmodel(params)
     sol(tspan[2])
 end
 
-#next a function to run the model AND get distance metrics
-function getmetrics(params)
-    out = runmodel(log.(params))
-    prev = sum(out)
-    if prev > 0.
-        rfreq = sum(out[[2,4]])/prev
-    else
-        rfreq = 0
-    end
-     
-    [prev,rfreq]
-
+function getmetricsbeta(param)
+    out = runmodelbeta(log.(param))
+    sum(out) 
 end
 
-function getdist(params)
-    metrics = getmetrics(params)
-    ((prevtarg - metrics[1])^2)/prevtarg + ((restarg - metrics[2])^2)/restarg
+function getdistbeta(param)
+    metric = getmetricsbeta(param)
+    ((prevtarg - metric)^2)/prevtarg
 end
-    
-function runmodel2(param)
+
+#For rest cost
+function runmodelrescost(param)
     p[4] = param[1]
     u0 = [0.001,0.001,0.0,0.0]
     tspan = (0.,10^6)
@@ -36,8 +28,8 @@ function runmodel2(param)
     sol(tspan[2])
 end
 
-function getmetrics2(params)
-    out = runmodel2(log.(params))
+function getmetricsrescost(param)
+    out = runmodelrescost(param/scale_val)
     prev = sum(out)
     if prev > 0.
         rfreq = sum(out[[2,4]])/prev
@@ -45,12 +37,14 @@ function getmetrics2(params)
         rfreq = 0
     end
      
-    [prev,rfreq]
-
+    return rfreq
 end
 
-function getdist2(params)
-    metrics = getmetrics2(params)
-    ((restarg - metrics[2])^2)/restarg
+function getdistrescost(param)
+    metrics = getmetricsrescost(param)
+    loss = exp((restarg - metrics)^2)/restarg
+    #lambda = 0.01  # Regularization strength
+    #regularization = lambda * sum(param .^ 2)
+    loss #+ regularization
 end
 
