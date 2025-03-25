@@ -34,12 +34,33 @@ trimressel <- trimres %>%
 #needs to be in days from 0
 trimressel$timeindays <- as.numeric(abs(trimressel$time[1] - trimressel$time))
 
-modeldf <- read_csv("modeloutput.csv")
+modeldf <- read_csv("modeloutput.csv") %>%
+    mutate(., time = trimressel$time[1] + timeindays,
+        rep = factor(proputi))
 
-png("TrimResistanceModvsData.png", width = 15, height = 8, units = "cm", res = 300)
-p <-ggplot(modeldf, aes(timeindays, rfreq)) + 
-    geom_line(col = "darkred") + 
-    geom_point(data = trimressel, aes(x = timeindays, y = prop))+
+png("TrimResistanceModvsData.png", width = 25, height = 8, units = "cm", res = 300)
+p <-ggplot(modeldf, aes(time, rfreq, group = proputi)) + 
+    geom_line(col = "darkred", alpha = 0.5) + 
+    geom_point(data = trimressel, aes(x = time, y = prop, group = NA, col = NA), col = "black")+
+    theme_bw() +
+    labs(x = "Time since 2015 in days", 
+        y = "Proportion of urine samples of E. coli\nresistant to trimethoprim")
+print(p)
+dev.off()
+
+average_modresults <- modeldf %>%
+    group_by(time) %>%
+    summarise(.,
+        lwr = quantile(rfreq, 0.025),
+        upr = quantile(rfreq, 0.975),
+        rfreq = mean(rfreq)
+    )
+
+png("TrimResistanceModvsDataRibbon.png", width = 15, height = 8, units = "cm", res = 300)
+p <-ggplot(average_modresults, aes(time, rfreq)) + 
+    geom_ribbon(aes(ymin = lwr, ymax = upr), col = "lightgrey", alpha = 0.3) +
+    geom_line(col = "#220f0f", alpha = 0.5) + 
+    geom_point(data = trimressel, aes(x = time, y = prop, group = NA, col = NA), col = "black")+
     theme_bw() +
     labs(x = "Time since 2015 in days", 
         y = "Proportion of urine samples of E. coli\nresistant to trimethoprim")
