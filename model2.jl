@@ -10,8 +10,11 @@ proptreat = 0.6304744525547445
 #Amongst those, initial proportion treating with trim is
 propT = 0.623
 
+#Incidence of UTI symptoms is 0.26 per capita per year. Assuming treatment duration is 9 days and all caused by own gut bacteria, infer prevalence 0.26 * 9/365 = 0.006410958904109589.
+#Then prev UTI syptoms/prev gut bacteria gives proportion of individuals who will develop UTI.
+#0.006410958904109589/0.36 = 0.0178
 #How many develop a UTI? Unknown but given 8.4% have bacteriuria, say 8.4/36 = max 0.23, Uknown how many with bacteriuria progress to UTI, but given prevalence estimates from previous work are something like 0.06%, 0.06/8.4 = 0.007. round to 0.01.
-propUTI = 0.001
+propUTI = 0.0178
 
 #scrape literature for:
 #->natural clearance -> most people will clear UTI symptoms in 9 days Hoffman et al, 2020. 
