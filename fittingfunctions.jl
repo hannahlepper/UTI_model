@@ -2,8 +2,8 @@
 function runmodelbeta(param)
     p[1] = param[1]
     u0 = [0.001,0.001,0.0,0.0]
-    tspan = (0.,10^6)
-    prob = ODEProblem(tc, u0, tspan, p)
+    tspan = (0.,5000.)
+    prob = ODEProblem(tc, u0, tspan, p, dtmax = 10.)
     sol = solve(prob)
     sol(tspan[2])
 end
@@ -19,32 +19,30 @@ function getdistbeta(param)
 end
 
 #For rest cost
-function runmodelrescost(param)
-    p[4] = param[1]
+function runmodelrescost(params)
+    #p[1] = params[1]
+    p[4] = params[1]
     u0 = [0.001,0.001,0.0,0.0]
-    tspan = (0.,10^6)
-    prob = ODEProblem(tc, u0, tspan, p)
+    tspan = (0.,5000.)
+    prob = ODEProblem(tc, u0, tspan, p, dtmax = 10.)
     sol = solve(prob)
     sol(tspan[2])
 end
 
-function getmetricsrescost(param)
-    out = runmodelrescost(param/scale_val)
-    prev = sum(out)
-    if prev > 0.
-        rfreq = sum(out[[2,4]])/prev
+function getmetricsrescost(params)
+    out = runmodelrescost(params ./ scale_param)
+    #prev = sum(out)
+    if sum(out[[2,4]]) > 0.
+        rfreq = sum(out[[2,4]])/sum(out)
     else
         rfreq = 0
     end
      
-    return rfreq
+    return rfreq #[prev,rfreq]
 end
 
-function getdistrescost(param)
-    metrics = getmetricsrescost(param)
-    loss = exp((restarg - metrics)^2)/restarg
-    #lambda = 0.01  # Regularization strength
-    #regularization = lambda * sum(param .^ 2)
-    loss #+ regularization
+function getdistrescost(params)
+    metrics = getmetricsrescost(params)
+    100*(restarg - metrics)^2/restarg #+ exp(((prevtarg - metrics[1])^2)/prevtarg)
 end
 
